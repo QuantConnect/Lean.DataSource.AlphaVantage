@@ -1,0 +1,50 @@
+name: Build & Test
+
+on:
+  push:
+    branches: ['*']
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Free space
+        run: df -h && rm -rf /opt/hostedtoolcache* && df -h
+
+      - name: Pull Foundation Image
+        uses: addnab/docker-run-action@v3
+        with:
+          image: quantconnect/lean:foundation
+
+      - name: Checkout Lean Same Branch
+        id: lean-same-branch
+        uses: actions/checkout@v2
+        continue-on-error: true
+        with:
+          ref: ${{ github.ref }}
+          repository: QuantConnect/Lean
+          path: Lean
+
+      - name: Checkout Lean Master
+        if: steps.lean-same-branch.outcome != 'success'
+        uses: actions/checkout@v2
+        with:
+          repository: QuantConnect/Lean
+          path: Lean
+
+      - name: Move Lean
+        run: mv Lean ../Lean
+
+      - name: BuildDataSource
+        run: dotnet build ./QuantConnect.DataSource.csproj /p:Configuration=Release /v:quiet /p:WarningLevel=1
+
+      - name: BuildTests
+        run: dotnet build ./tests/Tests.csproj /p:Configuration=Release /v:quiet /p:WarningLevel=1
+
+      - name: Run Tests
+        run: dotnet test ./tests/bin/Release/net6.0/Tests.dll

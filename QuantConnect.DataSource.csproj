@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>QuantConnect.DataSource</RootNamespace>
+    <AssemblyName>QuantConnect.DataSource.MyCustomDataType</AssemblyName>
+    <OutputPath>bin\$(Configuration)</OutputPath>
+    <DocumentationFile>$(OutputPath)\QuantConnect.DataSource.MyCustomDataType.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="QuantConnect.Common" Version="2.5.*" />
+    <PackageReference Include="protobuf-net" Version="3.1.33" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="tests\**" />
+    <EmbeddedResource Remove="tests\**" />
+    <None Remove="tests\**" />
+    <Compile Remove="DataProcessing\**" />
+    <EmbeddedResource Remove="DataProcessing\**" />
+    <None Remove="DataProcessing\**" />
+    <Compile Remove="Demonstration.cs" />
+    <Compile Remove="DemonstrationUniverse.cs" />
+    <None Remove=".gitignore" />
+  </ItemGroup>
+</Project>
