@@ -21,6 +21,7 @@ using System.Globalization;
 using QuantConnect.Logging;
 using QuantConnect.Securities;
 using QuantConnect.Data.Market;
+using QuantConnect.Configuration;
 
 namespace QuantConnect.AlphaVantage
 {
@@ -33,6 +34,14 @@ namespace QuantConnect.AlphaVantage
         private readonly IRestClient _avClient;
         private readonly RateGate _rateGate;
         private bool _disposed;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AlphaVantageDataDownloader"/>
+        /// getting the AlphaVantage API key from the configuration
+        /// </summary>
+        public AlphaVantageDataDownloader() : this(Config.Get("alpha-vantage-api-key"))
+        {
+        }
 
         /// <summary>
         /// Construct AlphaVantageDataDownloader with default RestClient
@@ -70,8 +79,16 @@ namespace QuantConnect.AlphaVantage
             var endUtc = dataDownloaderGetParameters.EndUtc;
             var tickType = dataDownloaderGetParameters.TickType;
 
+            if (endUtc < startUtc)
+            {
+                Log.Error($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}:InvalidDateRange. The history request start date must precede the end date, no history returned");
+                return Enumerable.Empty<BaseData>();
+            }
+
             if (tickType != TickType.Trade)
             {
+                Log.Error($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}: Not supported data type - {tickType}. " +
+                    $"Currently available support only for historical of type - TradeBar");
                 return Enumerable.Empty<BaseData>();
             }
 
@@ -128,7 +145,7 @@ namespace QuantConnect.AlphaVantage
         /// <returns></returns>
         private IEnumerable<TimeSeries> GetIntradayData(RestRequest request, DateTime startUtc, DateTime endUtc, Resolution resolution)
         {
-            request.AddParameter("function", "TIME_SERIES_INTRADAY_EXTENDED");
+            request.AddParameter("function", "TIME_SERIES_INTRADAY");
             request.AddParameter("adjusted", "false");
             switch (resolution)
             {
@@ -209,7 +226,7 @@ namespace QuantConnect.AlphaVantage
                 var year = i / 12 + 1;
                 var month = i % 12 + 1;
                 yield return $"year{year}month{month}";
-            } 
+            }
         }
 
         /// <summary>
