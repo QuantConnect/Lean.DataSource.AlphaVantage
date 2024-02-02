@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.002.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuantConnect.AlphaVantage", "QuantConnect.AlphaVantage\QuantConnect.AlphaVantage.csproj", "{0230D4D2-9D1B-42AF-A17C-6B7ADE5F6CC1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuantConnect.AlphaVantage.Tests", "QuantConnect.AlphaVantage.Tests\QuantConnect.AlphaVantage.Tests.csproj", "{C7B6B18A-92D8-4CE7-86AE-9DB5A1BBA27D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0230D4D2-9D1B-42AF-A17C-6B7ADE5F6CC1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0230D4D2-9D1B-42AF-A17C-6B7ADE5F6CC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0230D4D2-9D1B-42AF-A17C-6B7ADE5F6CC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0230D4D2-9D1B-42AF-A17C-6B7ADE5F6CC1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7B6B18A-92D8-4CE7-86AE-9DB5A1BBA27D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7B6B18A-92D8-4CE7-86AE-9DB5A1BBA27D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7B6B18A-92D8-4CE7-86AE-9DB5A1BBA27D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7B6B18A-92D8-4CE7-86AE-9DB5A1BBA27D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3C3446A4-57C1-4201-95F3-C85256FB1C8D}
+	EndGlobalSection
+EndGlobal
