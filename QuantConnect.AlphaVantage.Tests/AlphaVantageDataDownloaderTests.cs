@@ -17,7 +17,7 @@ using System;
 using System.Linq;
 using NUnit.Framework;
 using QuantConnect.Util;
-using QuantConnect.Securities;
+using QuantConnect.Data.Market;
 using System.Collections.Generic;
 
 namespace QuantConnect.AlphaVantage.Tests
@@ -27,12 +27,9 @@ namespace QuantConnect.AlphaVantage.Tests
     {
         private AlphaVantageDataDownloader _downloader;
 
-        private MarketHoursDatabase _marketHoursDatabase;
-
         [SetUp]
         public void SetUp()
         {
-            _marketHoursDatabase = MarketHoursDatabase.FromDataFolder();
             _downloader = new();
         }
 
@@ -48,28 +45,34 @@ namespace QuantConnect.AlphaVantage.Tests
             {
                 var symbol = Symbol.Create("AAPL", SecurityType.Equity, Market.USA);
 
-                var startUtc = new DateTime(2024, 1, 1);
-                var endUtc = new DateTime(2024, 2, 1);
-
-                yield return new TestCaseData(symbol, Resolution.Minute, startUtc, endUtc, TickType.Trade);
+                yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2024, 1, 1, 5, 30, 0), new DateTime(2024, 2, 1, 20, 0, 0), TickType.Trade);
+                yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2024, 1, 8, 9, 30, 0), new DateTime(2024, 1, 12, 16, 0, 0), TickType.Trade);
+                yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2020, 1, 8, 9, 30, 0), new DateTime(2021, 1, 12, 16, 0, 0), TickType.Trade);
+                yield return new TestCaseData(symbol, Resolution.Hour, new DateTime(2023, 11, 8, 9, 30, 0), new DateTime(2024, 2, 2, 16, 0, 0), TickType.Trade);
+                yield return new TestCaseData(symbol, Resolution.Daily, new DateTime(2023, 1, 8, 9, 30, 0), new DateTime(2024, 2, 2, 16, 0, 0), TickType.Trade);
             }
         }
 
         [TestCaseSource(nameof(DownloaderValidCaseData))]
         public void DownloadDataWithDifferentValidParameters(Symbol symbol, Resolution resolution, DateTime start, DateTime end, TickType tickType)
         {
-            var amountBars = GetAmountBarsByResolutionAndRangeDate(symbol, resolution, start, end);
-
             var downloadParameters = new DataDownloaderGetParameters(symbol, resolution, start, end, tickType);
 
             var baseData = _downloader.Get(downloadParameters).ToList();
 
             Assert.IsNotEmpty(baseData);
-            Assert.GreaterOrEqual(baseData.Count, amountBars);
+            Assert.IsTrue(baseData.First().Time >= start);
+            Assert.IsTrue(baseData.Last().Time <= end);
 
             foreach (var data in baseData)
             {
                 Assert.IsTrue(data.DataType == MarketDataType.TradeBar);
+                var tradeBar = data as TradeBar;
+                Assert.Greater(tradeBar.Open, 0m);
+                Assert.Greater(tradeBar.High, 0m);
+                Assert.Greater(tradeBar.Low, 0m);
+                Assert.Greater(tradeBar.Close, 0m);
+                Assert.IsTrue(tradeBar.Period.ToHigherResolutionEquivalent(true) == resolution);
             }
         }
 
@@ -109,31 +112,6 @@ namespace QuantConnect.AlphaVantage.Tests
             var baseData = _downloader.Get(downloadParameters).ToList();
 
             Assert.IsEmpty(baseData);
-        }
-
-        private double GetAmountBarsByResolutionAndRangeDate(Symbol symbol, Resolution resolution, DateTime startDate, DateTime endDate)
-        {
-            var exchangeHours = _marketHoursDatabase.GetExchangeHours(Market.USA, symbol, symbol.SecurityType);
-
-            int amountOpenDaysInRange = 0;
-            foreach (DateTime day in EachDay(startDate, endDate))
-            {
-                if (exchangeHours.IsDateOpen(day))
-                {
-                    amountOpenDaysInRange++;
-                }
-            }
-
-            return resolution switch
-            {
-                Resolution.Minute => amountOpenDaysInRange * exchangeHours.RegularMarketDuration.TotalMinutes,
-            };
-        }
-
-        public IEnumerable<DateTime> EachDay(DateTime from, DateTime thru)
-        {
-            for (var day = from.Date; day.Date <= thru.Date; day = day.AddDays(1))
-                yield return day;
         }
     }
 }

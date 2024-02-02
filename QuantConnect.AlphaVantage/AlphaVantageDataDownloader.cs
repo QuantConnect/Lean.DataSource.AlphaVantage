@@ -111,7 +111,7 @@ namespace QuantConnect.AlphaVantage
             }
 
             var period = resolution.ToTimeSpan();
-            return data.Select(d => new TradeBar(d.Time, symbol, d.Open, d.High, d.Low, d.Close, d.Volume, period));
+            return data.Where(d => d.Time >= startUtc && d.Time <= endUtc).Select(d => new TradeBar(d.Time, symbol, d.Open, d.High, d.Low, d.Close, d.Volume, period));
         }
 
         /// <summary>
@@ -147,6 +147,7 @@ namespace QuantConnect.AlphaVantage
         {
             request.AddParameter("function", "TIME_SERIES_INTRADAY");
             request.AddParameter("adjusted", "false");
+            request.AddParameter("outputsize", "full");
             switch (resolution)
             {
                 case Resolution.Minute:
@@ -162,7 +163,7 @@ namespace QuantConnect.AlphaVantage
             var slices = GetSlices(startUtc, endUtc);
             foreach (var slice in slices)
             {
-                request.AddOrUpdateParameter("slice", slice);
+                request.AddOrUpdateParameter("month", slice);
                 var data = GetTimeSeries(request);
                 foreach (var record in data)
                 {
@@ -218,15 +219,11 @@ namespace QuantConnect.AlphaVantage
                 throw new ArgumentOutOfRangeException(nameof(startUtc), "Intraday data is only available for the last 2 years.");
             }
 
-            var timeSpan = endUtc - startUtc;
-            var months = (int)Math.Floor(timeSpan.TotalDays / 30);
-
-            for (var i = months; i >= 0; i--)
+            do
             {
-                var year = i / 12 + 1;
-                var month = i % 12 + 1;
-                yield return $"year{year}month{month}";
-            }
+                yield return startUtc.ToString("yyyy-MM");
+                startUtc = startUtc.AddMonths(1);
+            } while (startUtc.Date <= endUtc.Date);
         }
 
         /// <summary>
