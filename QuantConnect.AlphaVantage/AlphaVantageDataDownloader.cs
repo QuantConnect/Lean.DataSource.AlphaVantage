@@ -13,6 +13,7 @@
  * limitations under the License.
 */
 
+using NodaTime;
 using CsvHelper;
 using RestSharp;
 using QuantConnect.Data;
@@ -22,6 +23,7 @@ using QuantConnect.Logging;
 using QuantConnect.Securities;
 using QuantConnect.Data.Market;
 using QuantConnect.Configuration;
+using System.Collections.Concurrent;
 
 namespace QuantConnect.AlphaVantage
 {
@@ -34,6 +36,11 @@ namespace QuantConnect.AlphaVantage
         private readonly IRestClient _avClient;
         private readonly RateGate _rateGate;
         private bool _disposed;
+
+        /// <summary>
+        /// Represents a mapping of symbols to their corresponding time zones for exchange information.
+        /// </summary>
+        private readonly ConcurrentDictionary<Symbol, DateTimeZone> _symbolExchangeTimeZones = new ConcurrentDictionary<Symbol, DateTimeZone>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AlphaVantageDataDownloader"/>
@@ -111,7 +118,10 @@ namespace QuantConnect.AlphaVantage
             }
 
             var period = resolution.ToTimeSpan();
-            return data.Where(d => d.Time >= startUtc && d.Time <= endUtc).Select(d => new TradeBar(d.Time, symbol, d.Open, d.High, d.Low, d.Close, d.Volume, period));
+            var startBySymbolExchange = ConvertTickTimeBySymbol(symbol, startUtc);
+            var endBySymbolExchange = ConvertTickTimeBySymbol(symbol, endUtc);
+
+            return data.Where(d => d.Time >= startBySymbolExchange && d.Time <= endBySymbolExchange).Select(d => new TradeBar(d.Time, symbol, d.Open, d.High, d.Low, d.Close, d.Volume, period));
         }
 
         /// <summary>
@@ -136,8 +146,10 @@ namespace QuantConnect.AlphaVantage
         }
 
         /// <summary>
-        /// Get data from intraday API
+        /// This API returns current and 20+ years of historical intraday OHLCV time series of the equity specified
+        /// https://www.alphavantage.co/documentation/#intraday-extended
         /// </summary>
+        /// <remarks>The exchange uses Eastern Time for the US market</remarks>
         /// <param name="request">Base request</param>
         /// <param name="startUtc">Start time</param>
         /// <param name="endUtc">End time</param>
@@ -214,11 +226,6 @@ namespace QuantConnect.AlphaVantage
         /// <returns>Slice names</returns>
         private static IEnumerable<string> GetSlices(DateTime startUtc, DateTime endUtc)
         {
-            if ((DateTime.UtcNow - startUtc).TotalDays > 365 * 2)
-            {
-                throw new ArgumentOutOfRangeException(nameof(startUtc), "Intraday data is only available for the last 2 years.");
-            }
-
             do
             {
                 yield return startUtc.ToString("yyyy-MM");
@@ -245,6 +252,24 @@ namespace QuantConnect.AlphaVantage
             }
 
             return days;
+        }
+
+        /// <summary>
+        /// Converts the provided tick timestamp, given in DateTime UTC Kind, to the exchange time zone associated with the specified Lean symbol.
+        /// </summary>
+        /// <param name="symbol">The Lean symbol for which the timestamp is associated.</param>
+        /// <param name="dateTimeUtc">The DateTime in Utc format Kind</param>
+        /// <returns>A DateTime object representing the converted timestamp in the exchange time zone.</returns>
+        private DateTime ConvertTickTimeBySymbol(Symbol symbol, DateTime dateTimeUtc)
+        {
+            if (!_symbolExchangeTimeZones.TryGetValue(symbol, out var exchangeTimeZone))
+            {
+                // read the exchange time zone from market-hours-database
+                exchangeTimeZone = _marketHoursDatabase.GetExchangeHours(symbol.ID.Market, symbol, symbol.SecurityType).TimeZone;
+                _symbolExchangeTimeZones.TryAdd(symbol, exchangeTimeZone);
+            }
+
+            return dateTimeUtc.ConvertFromUtc(exchangeTimeZone);
         }
 
         protected virtual void Dispose(bool disposing)

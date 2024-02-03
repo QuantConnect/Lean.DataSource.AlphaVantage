@@ -17,6 +17,7 @@ using System;
 using System.Linq;
 using NUnit.Framework;
 using QuantConnect.Util;
+using QuantConnect.Securities;
 using QuantConnect.Data.Market;
 using System.Collections.Generic;
 
@@ -26,11 +27,13 @@ namespace QuantConnect.AlphaVantage.Tests
     public class AlphaVantageDataDownloaderTests
     {
         private AlphaVantageDataDownloader _downloader;
+        private MarketHoursDatabase _marketHoursDatabase;
 
         [SetUp]
         public void SetUp()
         {
             _downloader = new();
+            _marketHoursDatabase = MarketHoursDatabase.FromDataFolder();
         }
 
         [TearDown]
@@ -48,21 +51,22 @@ namespace QuantConnect.AlphaVantage.Tests
                 yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2024, 1, 1, 5, 30, 0), new DateTime(2024, 2, 1, 20, 0, 0), TickType.Trade);
                 yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2024, 1, 8, 9, 30, 0), new DateTime(2024, 1, 12, 16, 0, 0), TickType.Trade);
                 yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2020, 1, 8, 9, 30, 0), new DateTime(2021, 1, 12, 16, 0, 0), TickType.Trade);
+                yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2015, 2, 2, 9, 30, 0), new DateTime(2015, 3, 1, 16, 0, 0), TickType.Trade);
                 yield return new TestCaseData(symbol, Resolution.Hour, new DateTime(2023, 11, 8, 9, 30, 0), new DateTime(2024, 2, 2, 16, 0, 0), TickType.Trade);
                 yield return new TestCaseData(symbol, Resolution.Daily, new DateTime(2023, 1, 8, 9, 30, 0), new DateTime(2024, 2, 2, 16, 0, 0), TickType.Trade);
             }
         }
 
         [TestCaseSource(nameof(DownloaderValidCaseData))]
-        public void DownloadDataWithDifferentValidParameters(Symbol symbol, Resolution resolution, DateTime start, DateTime end, TickType tickType)
+        public void DownloadDataWithDifferentValidParameters(Symbol symbol, Resolution resolution, DateTime startUtc, DateTime endUtc, TickType tickType)
         {
-            var downloadParameters = new DataDownloaderGetParameters(symbol, resolution, start, end, tickType);
+            var downloadParameters = new DataDownloaderGetParameters(symbol, resolution, startUtc, endUtc, tickType);
 
             var baseData = _downloader.Get(downloadParameters).ToList();
 
             Assert.IsNotEmpty(baseData);
-            Assert.IsTrue(baseData.First().Time >= start);
-            Assert.IsTrue(baseData.Last().Time <= end);
+            Assert.IsTrue(baseData.First().Time >= ConvertUtcTimeToSymbolExchange(symbol, startUtc));
+            Assert.IsTrue(baseData.Last().Time <= ConvertUtcTimeToSymbolExchange(symbol, endUtc));
 
             foreach (var data in baseData)
             {
@@ -112,6 +116,12 @@ namespace QuantConnect.AlphaVantage.Tests
             var baseData = _downloader.Get(downloadParameters).ToList();
 
             Assert.IsEmpty(baseData);
+        }
+
+        private DateTime ConvertUtcTimeToSymbolExchange(Symbol symbol, DateTime dateTimeUtc)
+        {
+            var exchangeTimeZone = _marketHoursDatabase.GetExchangeHours(symbol.ID.Market, symbol, symbol.SecurityType).TimeZone;
+            return dateTimeUtc.ConvertFromUtc(exchangeTimeZone);
         }
     }
 }
