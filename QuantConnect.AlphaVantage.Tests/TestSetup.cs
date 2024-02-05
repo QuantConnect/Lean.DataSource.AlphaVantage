@@ -29,7 +29,7 @@ namespace QuantConnect.AlphaVantage.Tests
         [OneTimeSetUp]
         public void GlobalSetup()
         {
-            Log.DebuggingEnabled = true;
+            // Log.DebuggingEnabled = true;
             Log.LogHandler = new CompositeLogHandler();
             Log.Trace("TestSetup(): starting...");
             ReloadConfiguration();
