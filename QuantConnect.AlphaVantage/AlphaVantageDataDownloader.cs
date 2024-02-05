@@ -31,6 +31,7 @@ using QuantConnect.Configuration;
 using System.Security.Cryptography;
 using System.Collections.Concurrent;
 using System.Net.NetworkInformation;
+using QuantConnect.AlphaVantage.Enums;
 
 namespace QuantConnect.AlphaVantage
 {
@@ -48,6 +49,20 @@ namespace QuantConnect.AlphaVantage
         /// Represents a mapping of symbols to their corresponding time zones for exchange information.
         /// </summary>
         private readonly ConcurrentDictionary<Symbol, DateTimeZone> _symbolExchangeTimeZones = new ConcurrentDictionary<Symbol, DateTimeZone>();
+
+        /// <summary>
+        /// A dictionary that associates each Alpha Vantage Premium Membership with its corresponding rate limit.
+        /// </summary>
+        public readonly Dictionary<AlphaVantagePricePlan, int> RateLimits = new()
+        {
+            { AlphaVantagePricePlan.Free, 25 },
+            { AlphaVantagePricePlan.Plan30, 30 },
+            { AlphaVantagePricePlan.Plan75, 75 },
+            { AlphaVantagePricePlan.Plan150, 150 },
+            { AlphaVantagePricePlan.Plan300, 300 },
+            { AlphaVantagePricePlan.Plan600, 600 },
+            { AlphaVantagePricePlan.Plan1200, 1200 }
+        };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AlphaVantageDataDownloader"/>
@@ -77,7 +92,9 @@ namespace QuantConnect.AlphaVantage
             _avClient.BaseUrl = new Uri("https://www.alphavantage.co/");
             _avClient.Authenticator = new AlphaVantageAuthenticator(apiKey);
 
-            _rateGate = new RateGate(5, TimeSpan.FromMinutes(1)); // Free API is limited to 5 requests/minute
+            var pricePlan = GetAlphaVantagePricePlan();
+
+            _rateGate = new RateGate(RateLimits[pricePlan], Time.OneMinute);
 
             ValidateSubscription();
         }
@@ -301,6 +318,28 @@ namespace QuantConnect.AlphaVantage
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Retrieves the Alpha Vantage Price Plan based on the configured settings.
+        /// If no plan is specified or an invalid plan is provided, it defaults to the Free Price Plan.
+        /// </summary>
+        /// <returns>The Alpha Vantage Price Plan.</returns>
+        /// <exception cref="ArgumentException">Thrown when an invalid or empty Price Plan is encountered.</exception>
+        private AlphaVantagePricePlan GetAlphaVantagePricePlan()
+        {
+            if (Config.TryGetValue("alpha-vantage-price-plan", "Free", out var plan) && string.IsNullOrEmpty(plan))
+            {
+                Log.Trace("Using the Free Price Plan by default. To change the Price Plan, please set the 'alpha-vantage-price-plan' configuration explicitly.");
+                plan = "Free";
+            }
+
+            if (!Enum.TryParse<AlphaVantagePricePlan>(plan, true, out var pricePlan))
+            {
+                throw new ArgumentException($"Invalid Price Plan: `{plan}`. Please ensure that the Price Plan is set and not empty.");
+            }
+
+            return pricePlan;
         }
 
         private class ModulesReadLicenseRead : Api.RestResponse

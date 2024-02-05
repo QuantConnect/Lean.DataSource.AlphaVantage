@@ -46,7 +46,10 @@ namespace QuantConnect.AlphaVantage.Tests
         [TearDown]
         public void TearDown()
         {
-            _downloader.Dispose();
+            if (_downloader != null ) 
+            {
+                _downloader.Dispose();
+            }
         }
 
         [Test]
