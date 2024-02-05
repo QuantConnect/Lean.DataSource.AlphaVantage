@@ -207,7 +207,7 @@ namespace QuantConnect.AlphaVantage
 
             _rateGate.WaitToProceed();
             //var url = _avClient.BuildUri(request);
-            Log.Trace("Downloading /{0}?{1}", request.Resource, string.Join("&", request.Parameters));
+            Log.Trace("Downloading /{0}?{1}", request.Resource, string.Join("&", request.Parameters.Where(p => p.Name != "apikey")));
             var response = _avClient.Get(request);
 
             if (response.ContentType != "application/x-download")

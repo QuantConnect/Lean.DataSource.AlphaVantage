@@ -55,8 +55,8 @@ namespace QuantConnect.AlphaVantage.Tests
             var ticker = "AAPL";
             var symbol = Symbol.Create(ticker, SecurityType.Equity, Market.USA);
             var resolution = Resolution.Daily;
-            var start = DateTime.UtcNow.AddDays(-100);
-            var end = DateTime.UtcNow;
+            var start = new DateTime(2021, 4, 4);
+            var end = new DateTime(2021, 7, 12);
 
             var expectedBars = new[]
             {
@@ -97,8 +97,8 @@ namespace QuantConnect.AlphaVantage.Tests
             var ticker = "AAPL";
             var symbol = Symbol.Create(ticker, SecurityType.Equity, Market.USA);
             var resolution = Resolution.Daily;
-            var start = DateTime.UtcNow.AddYears(-2);
-            var end = DateTime.UtcNow;
+            var start = new DateTime(2021, 4, 4);
+            var end = new DateTime(2024, 1, 1);
 
             var expectedBars = new[]
             {
@@ -140,15 +140,15 @@ namespace QuantConnect.AlphaVantage.Tests
             var ticker = "IBM";
             var symbol = Symbol.Create(ticker, SecurityType.Equity, Market.USA);
             var year = DateTime.UtcNow.Year - 1;
-            var start = new DateTime(year, 04, 05);
-            var end = new DateTime(year, 05, 06);
+            var start = new DateTime(year, 04, 05, 0, 0, 0);
+            var end = new DateTime(year, 05, 06, 15, 0, 0);
 
             var expectedBars = new[]
             {
                 new TradeBar(start.AddHours(9.5), symbol, 133.71m, 133.72m, 133.62m, 133.62m, 1977),
                 new TradeBar(start.AddHours(10.5), symbol, 134.30m, 134.56m, 134.245m, 134.34m, 154723),
-                new TradeBar(end.AddHours(9.5), symbol, 135.54m, 135.56m, 135.26m, 135.28m, 2315),
-                new TradeBar(end.AddHours(10.5), symbol, 134.905m,134.949m, 134.65m, 134.65m, 101997),
+                new TradeBar(end.AddHours(-5.5), symbol, 135.54m, 135.56m, 135.26m, 135.28m, 2315),
+                new TradeBar(end.AddHours(-4.5), symbol, 134.905m,134.949m, 134.65m, 134.65m, 101997),
             };
 
             var responses = new[]
@@ -177,8 +177,8 @@ namespace QuantConnect.AlphaVantage.Tests
 
             _avClient.Verify();
             Assert.AreEqual(2, requestUrls.Count);
-            Assert.AreEqual($"{BASE_URL}query?symbol=IBM&datatype=csv&function=TIME_SERIES_INTRADAY&adjusted=false&interval={interval}&slice=year1month2", requestUrls[0]);
-            Assert.AreEqual($"{BASE_URL}query?symbol=IBM&datatype=csv&function=TIME_SERIES_INTRADAY&adjusted=false&interval={interval}&slice=year1month1", requestUrls[1]);
+            Assert.AreEqual($"{BASE_URL}query?symbol=IBM&datatype=csv&function=TIME_SERIES_INTRADAY&adjusted=false&outputsize=full&interval={interval}&month=2023-04", requestUrls[0]);
+            Assert.AreEqual($"{BASE_URL}query?symbol=IBM&datatype=csv&function=TIME_SERIES_INTRADAY&adjusted=false&outputsize=full&interval={interval}&month=2023-05", requestUrls[1]);
 
             var bars = result.Cast<TradeBar>().ToList();
             Assert.AreEqual(4, bars.Count);
@@ -222,15 +222,48 @@ namespace QuantConnect.AlphaVantage.Tests
         }
 
         [Test]
-        public void GetIntradayDataGreaterThanTwoYearsThrowsException()
+        public void GetIntradayDataGreaterThanTwoYears()
         {
             var ticker = "IBM";
             var symbol = Symbol.Create(ticker, SecurityType.Equity, Market.USA);
             var resolution = Resolution.Minute;
-            var start = DateTime.UtcNow.AddYears(-2).AddDays(-1);
-            var end = DateTime.UtcNow;
+            var start = new DateTime(2020, 4, 4);
+            var end = new DateTime(2020, 6, 5);
 
-            Assert.Throws<ArgumentOutOfRangeException>(() => _downloader.Get(new DataDownloaderGetParameters(symbol, resolution, start, end)).ToList());
+            var expectedBars = new[]
+            {
+                new TradeBar(DateTime.Parse("2020-04-05 7:34:00"), symbol, 133.64m, 136.69m, 133.40m, 135.93m, 5471616),
+                new TradeBar(DateTime.Parse("2020-04-05 7:35:00"), symbol, 135.58m, 135.64m, 134.09m, 134.22m, 3620964),
+            };
+
+            IRestRequest request = null;
+            _avClient.Setup(m => m.Execute(It.IsAny<IRestRequest>(), It.IsAny<Method>()))
+                .Callback((IRestRequest r, Method m) => request = r)
+                .Returns(new RestResponse
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    ContentType = "application/x-download",
+                    Content = "timestamp,open,high,low,close,volume\n" +
+                              "2020-04-05 7:34:00,133.6400,136.6900,133.4000,135.9300,5471616\n" +
+                              "2020-04-05 7:35:00,135.5800,135.6400,134.0900,134.2200,3620964\n" +
+                              "2020-04-05 7:35:00,135.5800,135.6400,134.0900,134.2200,3620964\n" +
+                              "2020-04-06 7:36:00,133.6400,136.6900,133.4000,135.9300,5471616\n" +
+                              "2020-05-06 7:37:00,133.6400,136.6900,133.4000,135.9300,5471616\n" +
+                              "2020-05-07 7:38:00,133.6400,136.6900,133.4000,135.9300,5471616\n" +
+                              "2020-05-07 7:39:00,133.6400,136.6900,133.4000,135.9300,5471616\n"
+                })
+                .Verifiable();
+
+            var result = _downloader.Get(new DataDownloaderGetParameters(symbol, resolution, start, end)).ToList();
+
+            _avClient.Verify();
+            var requestUrl = BuildUrl(request);
+            Assert.That(request.Method, Is.EqualTo(Method.GET));
+            Assert.That(requestUrl, Is.EqualTo($"{BASE_URL}query?symbol=IBM&datatype=csv&function=TIME_SERIES_INTRADAY&adjusted=false&outputsize=full&interval=1min&month=2020-06"));
+
+            Assert.That(result.Count, Is.EqualTo(7 * 3)); // 6 mock result * 3 request per each month
+            Assert.That(result[0], Is.EqualTo(expectedBars[0]).Using(_tradeBarComparer));
+            Assert.That(result[1], Is.EqualTo(expectedBars[1]).Using(_tradeBarComparer));
         }
 
         [Test]

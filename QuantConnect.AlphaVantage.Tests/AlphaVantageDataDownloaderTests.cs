@@ -42,6 +42,14 @@ namespace QuantConnect.AlphaVantage.Tests
             _downloader.Dispose();
         }
 
+        /// <summary>
+        /// Provides a collection of valid test case data for the Downloader method.
+        /// Each TestCaseData represents a valid set of data to be used in testing.
+        /// It is important to note that the test cases should not exceed 25 requests. (Because free api key gives only 25 request per day)
+        /// </summary>
+        /// <returns>
+        /// An IEnumerable of TestCaseData, each representing a valid set of data for the Downloader method.
+        /// </returns>
         public static IEnumerable<TestCaseData> DownloaderValidCaseData
         {
             get
@@ -50,7 +58,6 @@ namespace QuantConnect.AlphaVantage.Tests
 
                 yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2024, 1, 1, 5, 30, 0), new DateTime(2024, 2, 1, 20, 0, 0), TickType.Trade);
                 yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2024, 1, 8, 9, 30, 0), new DateTime(2024, 1, 12, 16, 0, 0), TickType.Trade);
-                yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2020, 1, 8, 9, 30, 0), new DateTime(2021, 1, 12, 16, 0, 0), TickType.Trade);
                 yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2015, 2, 2, 9, 30, 0), new DateTime(2015, 3, 1, 16, 0, 0), TickType.Trade);
                 yield return new TestCaseData(symbol, Resolution.Hour, new DateTime(2023, 11, 8, 9, 30, 0), new DateTime(2024, 2, 2, 16, 0, 0), TickType.Trade);
                 yield return new TestCaseData(symbol, Resolution.Daily, new DateTime(2023, 1, 8, 9, 30, 0), new DateTime(2024, 2, 2, 16, 0, 0), TickType.Trade);
