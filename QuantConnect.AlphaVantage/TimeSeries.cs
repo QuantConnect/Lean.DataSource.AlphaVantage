@@ -20,7 +20,7 @@ namespace QuantConnect.AlphaVantage
     /// <summary>
     /// Alpha Vantage time series model
     /// </summary>
-    internal class TimeSeries
+    public class TimeSeries
     {
         [Name("time", "timestamp")]
         public DateTime Time { get; set; }
