@@ -9,17 +9,17 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
-
+    env:
+      QC_JOB_USER_ID: ${{ secrets.QC_JOB_USER_ID }}
+      QC_API_ACCESS_TOKEN: ${{ secrets.QC_API_ACCESS_TOKEN }}
+      QC_JOB_ORGANIZATION_ID: ${{ secrets.QC_JOB_ORGANIZATION_ID }}
+      QC_ALPHA_VANTAGE_API_KEY: ${{ secrets.QC_ALPHA_VANTAGE_API_KEY }}
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
 
       - name: Free space
         run: df -h && rm -rf /opt/hostedtoolcache* && df -h
-
-      - name: Pull Foundation Image
-        uses: addnab/docker-run-action@v3
-        with:
-          image: quantconnect/lean:foundation
 
       - name: Checkout Lean Same Branch
         id: lean-same-branch
@@ -40,11 +40,17 @@ jobs:
       - name: Move Lean
         run: mv Lean ../Lean
 
-      - name: BuildDataSource
-        run: dotnet build ./QuantConnect.DataSource.csproj /p:Configuration=Release /v:quiet /p:WarningLevel=1
+      - name: Pull Foundation Image
+        uses: addnab/docker-run-action@v3
+        with:
+          image: quantconnect/lean:foundation
+          options: -v /home/runner/work:/__w --workdir /__w/Lean.DataSource.AlphaVantage/Lean.DataSource.AlphaVantage -e QC_JOB_USER_ID=${{ secrets.QC_JOB_USER_ID }} -e QC_API_ACCESS_TOKEN=${{ secrets.QC_API_ACCESS_TOKEN }} -e QC_JOB_ORGANIZATION_ID=${{ secrets.QC_JOB_ORGANIZATION_ID }} -e QC_ALPHA_VANTAGE_API_KEY=${{ secrets.QC_ALPHA_VANTAGE_API_KEY }}
 
-      - name: BuildTests
-        run: dotnet build ./tests/Tests.csproj /p:Configuration=Release /v:quiet /p:WarningLevel=1
+      - name: Build QuantConnect.AlphaVantage
+        run: dotnet build ./QuantConnect.AlphaVantage/QuantConnect.AlphaVantage.csproj /p:Configuration=Release /v:quiet /p:WarningLevel=1
 
-      - name: Run Tests
-        run: dotnet test ./tests/bin/Release/net6.0/Tests.dll
+      - name: Build QuantConnect.AlphaVantage.Tests
+        run: dotnet build ./QuantConnect.AlphaVantage.Tests/QuantConnect.AlphaVantage.Tests.csproj /p:Configuration=Release /v:quiet /p:WarningLevel=1
+
+      - name: Run QuantConnect.AlphaVantage.Tests
+        run: dotnet test ./QuantConnect.AlphaVantage.Tests/bin/Release/QuantConnect.AlphaVantage.Tests.dll
