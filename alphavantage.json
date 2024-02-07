@@ -1,13 +1,14 @@
 {
-    "description": "Alpha Vantage provides equity price and fundamental data via and API with affordable pricing. The QuantConnect integration of this plugin with the Local Platform and LEAN-CLI enables use on-premise to download data and stream from the Alpha Vantage API.",
+    "description": "Alpha Vantage provides equity price and fundamental data via an API with affordable pricing. The QuantConnect integration of this plugin with the Local Platform and LEAN-CLI enables use on-premise to download data and stream from the Alpha Vantage API.",
     "platforms-features": [
         {
             "Platform Support": ["Cloud Platform", "Local Platform", "LEAN CLI"],
-            "Download Data": 		[0, 1, 1],
-            "Backtesting": 		[0, 1, 1],
-            "Parameter Optimization": 	[0, 1, 1],
-            "Live Trading": 		[0, 0, 0]
+            "Download Data": [0, 1, 1],
+            "Backtesting": [0, 1, 1],
+            "Optimization": [0, 1, 1],
+            "Live Trading": [0, 0, 0]
         }
     ],
+    "data-supported": [ "Equity", "Forex" ], 
     "more-information": "https://www.alphavantage.co/"
 }
