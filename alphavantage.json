@@ -9,6 +9,6 @@
             "Live Trading": [0, 0, 0]
         }
     ],
-    "data-supported": [ "Equity", "Forex" ], 
+    "data-supported": [ "Equity" ], 
     "more-information": "https://www.alphavantage.co/"
 }
