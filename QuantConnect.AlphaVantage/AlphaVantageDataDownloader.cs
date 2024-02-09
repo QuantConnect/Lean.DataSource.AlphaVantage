@@ -46,6 +46,16 @@ namespace QuantConnect.AlphaVantage
         private bool _disposed;
 
         /// <summary>
+        /// Indicates whether the warning for invalid history <see cref="TickType"/> has been fired.
+        /// </summary>
+        private bool _invalidHistoryDataTypeWarningFired;
+
+        /// <summary>
+        /// Indicates whether the warning for invalid <see cref="SecurityType"/> has been fired.
+        /// </summary>
+        private bool _invalidSecurityTypeWarningFired;
+
+        /// <summary>
         /// Represents a mapping of symbols to their corresponding time zones for exchange information.
         /// </summary>
         private readonly ConcurrentDictionary<Symbol, DateTimeZone> _symbolExchangeTimeZones = new ConcurrentDictionary<Symbol, DateTimeZone>();
@@ -120,14 +130,22 @@ namespace QuantConnect.AlphaVantage
 
             if (tickType != TickType.Trade)
             {
-                Log.Error($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}: Not supported data type - {tickType}. " +
-                    $"Currently available support only for historical of type - TradeBar");
+                if (!_invalidHistoryDataTypeWarningFired)
+                {
+                    Log.Error($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}: Not supported data type - {tickType}. " +
+                        $"Currently available support only for historical of type - TradeBar");
+                    _invalidHistoryDataTypeWarningFired = true;
+                }
                 return Enumerable.Empty<BaseData>();
             }
 
             if (symbol.SecurityType != SecurityType.Equity)
             {
-                Log.Trace($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}: Unsupported SecurityType '{symbol.SecurityType}' for symbol '{symbol}'");
+                if (!_invalidSecurityTypeWarningFired)
+                {
+                    Log.Trace($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}: Unsupported SecurityType '{symbol.SecurityType}' for symbol '{symbol}'");
+                    _invalidSecurityTypeWarningFired = true;
+                }
                 return Enumerable.Empty<BaseData>();
             }
 
