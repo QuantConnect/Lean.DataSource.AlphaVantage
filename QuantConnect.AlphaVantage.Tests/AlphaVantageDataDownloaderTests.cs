@@ -109,6 +109,10 @@ namespace QuantConnect.AlphaVantage.Tests
                     .SetDescription($"Not supported {nameof(Resolution.Second)} -> throw Exception");
                 yield return new TestCaseData(symbol, Resolution.Minute, endUtc, startUtc, TickType.Trade, false)
                     .SetDescription("startDateTime > endDateTime -> empty result");
+                yield return new TestCaseData(Symbol.Create("USDJPY", SecurityType.Forex, Market.Oanda), Resolution.Minute, startUtc, endUtc, TickType.Trade, false)
+                    .SetDescription($"Not supported {nameof(SecurityType.Forex)} -> empty result");
+                yield return new TestCaseData(Symbol.Create("BTCUSD", SecurityType.Crypto, Market.Coinbase), Resolution.Minute, startUtc, endUtc, TickType.Trade, false)
+                    .SetDescription($"Not supported {nameof(SecurityType.Crypto)} -> empty result");
             }
         }
 

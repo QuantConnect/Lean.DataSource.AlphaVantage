@@ -125,6 +125,12 @@ namespace QuantConnect.AlphaVantage
                 return Enumerable.Empty<BaseData>();
             }
 
+            if (symbol.SecurityType != SecurityType.Equity)
+            {
+                Log.Trace($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}: Unsupported SecurityType '{symbol.SecurityType}' for symbol '{symbol}'");
+                return Enumerable.Empty<BaseData>();
+            }
+
             var request = new RestRequest("query", DataFormat.Json);
             request.AddParameter("symbol", symbol.Value);
             request.AddParameter("datatype", "csv");
