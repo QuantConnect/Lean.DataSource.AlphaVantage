@@ -20,12 +20,6 @@ Alpha Vantage provides real-time and historical financial market data through a 
 
 - **Symbol SecurityType Support:** The library currently supports the following symbol security types:
   - [x] Equity
-  - [ ] Option
-  - [ ] Commodity
-  - [ ] Forex
-  - [ ] Future
-  - [ ] Crypto
-  - [ ] Index
 
 - **Backtesting and Research:** Test your algorithm in backtest and research modes within [QuantConnect.Lean CLI](https://www.quantconnect.com/docs/v2/lean-cli), leveraging the Alpha Vantage API data to refine and optimize your trading strategies.
 
