@@ -21,7 +21,7 @@ using QuantConnect.Securities;
 using QuantConnect.Data.Market;
 using System.Collections.Generic;
 
-namespace QuantConnect.AlphaVantage.Tests
+namespace QuantConnect.DataSource.AlphaVantage.Tests
 {
     [TestFixture]
     public class AlphaVantageDataDownloaderTests

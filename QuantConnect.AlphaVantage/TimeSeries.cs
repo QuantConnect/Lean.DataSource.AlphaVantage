@@ -15,7 +15,7 @@
 
 using CsvHelper.Configuration.Attributes;
 
-namespace QuantConnect.AlphaVantage
+namespace QuantConnect.DataSource.AlphaVantage
 {
     /// <summary>
     /// Alpha Vantage time series model

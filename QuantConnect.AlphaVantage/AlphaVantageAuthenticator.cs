@@ -16,7 +16,7 @@
 using RestSharp;
 using RestSharp.Authenticators;
 
-namespace QuantConnect.AlphaVantage
+namespace QuantConnect.DataSource.AlphaVantage
 {
     /// <summary>
     /// Implements authentication for Alpha Vantage API
