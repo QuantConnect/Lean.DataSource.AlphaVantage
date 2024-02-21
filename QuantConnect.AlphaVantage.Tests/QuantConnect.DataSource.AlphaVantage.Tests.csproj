@@ -28,6 +28,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\QuantConnect.AlphaVantage\QuantConnect.DataSource.AlphaVantage.csproj" />
+		<ProjectReference Include="..\..\Lean\Tests\QuantConnect.Tests.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
