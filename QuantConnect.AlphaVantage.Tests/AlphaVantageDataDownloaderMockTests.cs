@@ -22,7 +22,7 @@ using NUnit.Framework;
 using QuantConnect.Data.Market;
 using System.Collections.Generic;
 
-namespace QuantConnect.DataSource.AlphaVantage.Tests
+namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
 {
     [TestFixture]
     public class AlphaVantageDataDownloaderMockTests

@@ -13,7 +13,7 @@
  * limitations under the License.
 */
 
-namespace QuantConnect.DataSource.AlphaVantage.Enums
+namespace QuantConnect.Lean.DataSource.AlphaVantage.Enums
 {
     /// <summary>
     /// Represents different plans with associated request limits and monthly prices.

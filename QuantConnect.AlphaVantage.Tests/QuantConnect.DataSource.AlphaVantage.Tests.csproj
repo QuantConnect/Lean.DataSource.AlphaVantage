@@ -7,10 +7,10 @@
 		<IsPackable>false</IsPackable>
 		<TestProjectType>UnitTest</TestProjectType>
 		<OutputPath>bin\$(Configuration)\</OutputPath>
-		<Product>QuantConnect.DataSource.AlphaVantage.Tests</Product>
-		<AssemblyName>QuantConnect.DataSource.AlphaVantage.Tests</AssemblyName>
-		<RootNamespace>QuantConnect.DataSource.AlphaVantage.Tests</RootNamespace>
-		<AssemblyTitle>QuantConnect.DataSource.AlphaVantage.Tests</AssemblyTitle>
+		<Product>QuantConnect.Lean.DataSource.AlphaVantage.Tests</Product>
+		<AssemblyName>QuantConnect.Lean.DataSource.AlphaVantage.Tests</AssemblyName>
+		<RootNamespace>QuantConnect.Lean.DataSource.AlphaVantage.Tests</RootNamespace>
+		<AssemblyTitle>QuantConnect.Lean.DataSource.AlphaVantage.Tests</AssemblyTitle>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 	</PropertyGroup>
 

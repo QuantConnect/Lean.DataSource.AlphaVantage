@@ -31,9 +31,9 @@ using QuantConnect.Configuration;
 using System.Security.Cryptography;
 using System.Collections.Concurrent;
 using System.Net.NetworkInformation;
-using QuantConnect.DataSource.AlphaVantage.Enums;
+using QuantConnect.Lean.DataSource.AlphaVantage.Enums;
 
-namespace QuantConnect.DataSource.AlphaVantage
+namespace QuantConnect.Lean.DataSource.AlphaVantage
 {
     /// <summary>
     /// Alpha Vantage data downloader

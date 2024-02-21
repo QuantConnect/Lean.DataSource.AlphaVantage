@@ -21,7 +21,7 @@ using System.Collections;
 using QuantConnect.Logging;
 using QuantConnect.Configuration;
 
-namespace QuantConnect.DataSource.AlphaVantage.Tests
+namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
 {
     [SetUpFixture]
     public class TestSetup
