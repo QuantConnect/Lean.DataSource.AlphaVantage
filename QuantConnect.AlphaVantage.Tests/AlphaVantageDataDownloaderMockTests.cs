@@ -34,6 +34,16 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
         private AlphaVantageDataDownloader _downloader;
         private readonly TradeBarComparer _tradeBarComparer = new TradeBarComparer();
 
+        private Symbol AAPL;
+        private Symbol IBM;
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp()
+        {
+            AAPL = new Symbol(SecurityIdentifier.GenerateEquity("AAPL", Market.USA, false), "AAPL");
+            IBM = new Symbol(SecurityIdentifier.GenerateEquity("IBM", Market.USA, false), "IBM");
+        }
+
         [SetUp]
         public void SetUp()
         {
@@ -46,7 +56,7 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
         [TearDown]
         public void TearDown()
         {
-            if (_downloader != null ) 
+            if (_downloader != null)
             {
                 _downloader.Dispose();
             }
@@ -55,16 +65,14 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
         [Test]
         public void GetDailyLessThan100DaysGetsCompactDailyData()
         {
-            var ticker = "AAPL";
-            var symbol = Symbol.Create(ticker, SecurityType.Equity, Market.USA);
             var resolution = Resolution.Daily;
             var start = new DateTime(2021, 4, 4);
             var end = new DateTime(2021, 7, 12);
 
             var expectedBars = new[]
             {
-                new TradeBar(DateTime.Parse("2021-04-05"), symbol, 133.64m, 136.69m, 133.40m, 135.93m, 5471616),
-                new TradeBar(DateTime.Parse("2021-04-06"), symbol, 135.58m, 135.64m, 134.09m, 134.22m, 3620964),
+                new TradeBar(DateTime.Parse("2021-04-05"), AAPL, 133.64m, 136.69m, 133.40m, 135.93m, 5471616),
+                new TradeBar(DateTime.Parse("2021-04-06"), AAPL, 135.58m, 135.64m, 134.09m, 134.22m, 3620964),
             };
 
             IRestRequest request = null;
@@ -80,7 +88,7 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
                 })
                 .Verifiable();
 
-            var result = _downloader.Get(new DataDownloaderGetParameters(symbol, resolution, start, end));
+            var result = _downloader.Get(new DataDownloaderGetParameters(AAPL, resolution, start, end));
 
             _avClient.Verify();
             var requestUrl = BuildUrl(request);
@@ -97,16 +105,14 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
         [Test]
         public void GetDailyGreaterThan100DaysGetsFullDailyData()
         {
-            var ticker = "AAPL";
-            var symbol = Symbol.Create(ticker, SecurityType.Equity, Market.USA);
             var resolution = Resolution.Daily;
             var start = new DateTime(2021, 4, 4);
             var end = new DateTime(2024, 1, 1);
 
             var expectedBars = new[]
             {
-                new TradeBar(DateTime.Parse("2021-04-05"), symbol, 133.64m, 136.69m, 133.40m, 135.93m, 5471616),
-                new TradeBar(DateTime.Parse("2021-04-06"), symbol, 135.58m, 135.64m, 134.09m, 134.22m, 3620964),
+                new TradeBar(DateTime.Parse("2021-04-05"), AAPL, 133.64m, 136.69m, 133.40m, 135.93m, 5471616),
+                new TradeBar(DateTime.Parse("2021-04-06"), AAPL, 135.58m, 135.64m, 134.09m, 134.22m, 3620964),
             };
 
             IRestRequest request = null;
@@ -122,7 +128,7 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
                 })
                 .Verifiable();
 
-            var result = _downloader.Get(new DataDownloaderGetParameters(symbol, resolution, start, end));
+            var result = _downloader.Get(new DataDownloaderGetParameters(AAPL, resolution, start, end));
 
             _avClient.Verify();
             var requestUrl = BuildUrl(request);
@@ -140,18 +146,16 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
         [TestCase(Resolution.Hour, "60min")]
         public void GetMinuteHourGetsIntradayData(Resolution resolution, string interval)
         {
-            var ticker = "IBM";
-            var symbol = Symbol.Create(ticker, SecurityType.Equity, Market.USA);
             var year = DateTime.UtcNow.Year - 1;
             var start = new DateTime(year, 04, 05, 0, 0, 0);
             var end = new DateTime(year, 05, 06, 15, 0, 0);
 
             var expectedBars = new[]
             {
-                new TradeBar(start.AddHours(9.5), symbol, 133.71m, 133.72m, 133.62m, 133.62m, 1977),
-                new TradeBar(start.AddHours(10.5), symbol, 134.30m, 134.56m, 134.245m, 134.34m, 154723),
-                new TradeBar(end.AddHours(-5.5), symbol, 135.54m, 135.56m, 135.26m, 135.28m, 2315),
-                new TradeBar(end.AddHours(-4.5), symbol, 134.905m,134.949m, 134.65m, 134.65m, 101997),
+                new TradeBar(start.AddHours(9.5), IBM, 133.71m, 133.72m, 133.62m, 133.62m, 1977),
+                new TradeBar(start.AddHours(10.5), IBM, 134.30m, 134.56m, 134.245m, 134.34m, 154723),
+                new TradeBar(end.AddHours(-5.5), IBM, 135.54m, 135.56m, 135.26m, 135.28m, 2315),
+                new TradeBar(end.AddHours(-4.5), IBM, 134.905m,134.949m, 134.65m, 134.65m, 101997),
             };
 
             var responses = new[]
@@ -176,7 +180,7 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
                 })
                 .Verifiable();
 
-            var result = _downloader.Get(new DataDownloaderGetParameters(symbol, resolution, start, end)).ToList();
+            var result = _downloader.Get(new DataDownloaderGetParameters(IBM, resolution, start, end)).ToList();
 
             _avClient.Verify();
             Assert.AreEqual(2, requestUrls.Count);
@@ -195,12 +199,10 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
         [TestCase(Resolution.Second)]
         public void GetUnsupportedResolutionThrowsException(Resolution resolution)
         {
-            var ticker = "IBM";
-            var symbol = Symbol.Create(ticker, SecurityType.Equity, Market.USA);
             var start = DateTime.UtcNow.AddMonths(-2);
             var end = DateTime.UtcNow;
 
-            Assert.Throws<ArgumentOutOfRangeException>(() => _downloader.Get(new DataDownloaderGetParameters(symbol, resolution, start, end)).ToList());
+            Assert.IsNull(_downloader.Get(new DataDownloaderGetParameters(IBM, resolution, start, end))?.ToList());
         }
 
         [TestCase(Resolution.Minute)]
@@ -208,8 +210,6 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
         [TestCase(Resolution.Daily)]
         public void UnexpectedResponseContentTypeThrowsException(Resolution resolution)
         {
-            var ticker = "IBM";
-            var symbol = Symbol.Create(ticker, SecurityType.Equity, Market.USA);
             var start = DateTime.UtcNow.AddMonths(-2);
             var end = DateTime.UtcNow;
 
@@ -221,22 +221,20 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
                 })
                 .Verifiable();
 
-            Assert.Throws<FormatException>(() => _downloader.Get(new DataDownloaderGetParameters(symbol, resolution, start, end)).ToList());
+            Assert.Throws<FormatException>(() => _downloader.Get(new DataDownloaderGetParameters(IBM, resolution, start, end)).ToList());
         }
 
         [Test]
         public void GetIntradayDataGreaterThanTwoYears()
         {
-            var ticker = "IBM";
-            var symbol = Symbol.Create(ticker, SecurityType.Equity, Market.USA);
             var resolution = Resolution.Minute;
             var start = new DateTime(2020, 4, 4);
             var end = new DateTime(2020, 6, 5);
 
             var expectedBars = new[]
             {
-                new TradeBar(DateTime.Parse("2020-04-05 7:34:00"), symbol, 133.64m, 136.69m, 133.40m, 135.93m, 5471616),
-                new TradeBar(DateTime.Parse("2020-04-05 7:35:00"), symbol, 135.58m, 135.64m, 134.09m, 134.22m, 3620964),
+                new TradeBar(DateTime.Parse("2020-04-05 7:34:00"), IBM, 133.64m, 136.69m, 133.40m, 135.93m, 5471616),
+                new TradeBar(DateTime.Parse("2020-04-05 7:35:00"), IBM, 135.58m, 135.64m, 134.09m, 134.22m, 3620964),
             };
 
             IRestRequest request = null;
@@ -257,7 +255,7 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
                 })
                 .Verifiable();
 
-            var result = _downloader.Get(new DataDownloaderGetParameters(symbol, resolution, start, end)).ToList();
+            var result = _downloader.Get(new DataDownloaderGetParameters(IBM, resolution, start, end)).ToList();
 
             _avClient.Verify();
             var requestUrl = BuildUrl(request);

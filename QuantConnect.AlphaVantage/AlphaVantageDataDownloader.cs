@@ -114,7 +114,7 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage
         /// </summary>
         /// <param name="dataDownloaderGetParameters">model class for passing in parameters for historical data</param>
         /// <returns>Enumerable of base data for this symbol</returns>
-        public IEnumerable<BaseData> Get(DataDownloaderGetParameters dataDownloaderGetParameters)
+        public IEnumerable<BaseData>? Get(DataDownloaderGetParameters dataDownloaderGetParameters)
         {
             var symbol = dataDownloaderGetParameters.Symbol;
             var resolution = dataDownloaderGetParameters.Resolution;
@@ -125,7 +125,7 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage
             if (endUtc < startUtc)
             {
                 Log.Error($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}:InvalidDateRange. The history request start date must precede the end date, no history returned");
-                return Enumerable.Empty<BaseData>();
+                return null;
             }
 
             if (tickType != TickType.Trade)
@@ -136,7 +136,7 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage
                         $"Currently available support only for historical of type - TradeBar");
                     _invalidHistoryDataTypeWarningFired = true;
                 }
-                return Enumerable.Empty<BaseData>();
+                return null;
             }
 
             if (symbol.SecurityType != SecurityType.Equity)
@@ -146,7 +146,7 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage
                     Log.Trace($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}: Unsupported SecurityType '{symbol.SecurityType}' for symbol '{symbol}'");
                     _invalidSecurityTypeWarningFired = true;
                 }
-                return Enumerable.Empty<BaseData>();
+                return null;
             }
 
             var request = new RestRequest("query", DataFormat.Json);
@@ -164,7 +164,8 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage
                     data = GetDailyData(request, startUtc, endUtc, symbol);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(resolution), $"{resolution} resolution not supported by API.");
+                    Log.Trace($"{nameof(AlphaVantageDataDownloader)}.{resolution} resolution not supported by API.");
+                    return null;
             }
 
             var period = resolution.ToTimeSpan();
