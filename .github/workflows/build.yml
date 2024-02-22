@@ -53,4 +53,4 @@ jobs:
         run: dotnet build ./QuantConnect.AlphaVantage.Tests/QuantConnect.DataSource.AlphaVantage.Tests.csproj /p:Configuration=Release /v:quiet /p:WarningLevel=1
 
       - name: Run QuantConnect.DataSource.AlphaVantage.Tests
-        run: dotnet test ./QuantConnect.AlphaVantage.Tests/bin/Release/QuantConnect.DataSource.AlphaVantage.Tests.dll
+        run: dotnet test ./QuantConnect.AlphaVantage.Tests/bin/Release/QuantConnect.Lean.DataSource.AlphaVantage.Tests.dll
