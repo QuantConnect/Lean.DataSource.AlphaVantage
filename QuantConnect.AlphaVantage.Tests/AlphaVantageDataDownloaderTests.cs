@@ -29,11 +29,14 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
         private AlphaVantageDataDownloader _downloader;
         private MarketHoursDatabase _marketHoursDatabase;
 
+        public static Symbol AAPL { get; private set; }
+
         [SetUp]
         public void SetUp()
         {
             _downloader = new();
             _marketHoursDatabase = MarketHoursDatabase.FromDataFolder();
+            AAPL = Symbol.Create("AAPL", SecurityType.Equity, Market.USA);
         }
 
         [TearDown]
@@ -57,13 +60,11 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
         {
             get
             {
-                var symbol = Symbol.Create("AAPL", SecurityType.Equity, Market.USA);
-
-                yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2024, 1, 1, 5, 30, 0), new DateTime(2024, 2, 1, 20, 0, 0), TickType.Trade);
-                yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2024, 1, 8, 9, 30, 0), new DateTime(2024, 1, 12, 16, 0, 0), TickType.Trade);
-                yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2015, 2, 2, 9, 30, 0), new DateTime(2015, 3, 1, 16, 0, 0), TickType.Trade);
-                yield return new TestCaseData(symbol, Resolution.Hour, new DateTime(2023, 11, 8, 9, 30, 0), new DateTime(2024, 2, 2, 16, 0, 0), TickType.Trade);
-                yield return new TestCaseData(symbol, Resolution.Daily, new DateTime(2023, 1, 8, 9, 30, 0), new DateTime(2024, 2, 2, 16, 0, 0), TickType.Trade);
+                yield return new TestCaseData(AAPL, Resolution.Minute, new DateTime(2024, 1, 1, 5, 30, 0), new DateTime(2024, 2, 1, 20, 0, 0), TickType.Trade);
+                yield return new TestCaseData(AAPL, Resolution.Minute, new DateTime(2024, 1, 8, 9, 30, 0), new DateTime(2024, 1, 12, 16, 0, 0), TickType.Trade);
+                yield return new TestCaseData(AAPL, Resolution.Minute, new DateTime(2015, 2, 2, 9, 30, 0), new DateTime(2015, 3, 1, 16, 0, 0), TickType.Trade);
+                yield return new TestCaseData(AAPL, Resolution.Hour, new DateTime(2023, 11, 8, 9, 30, 0), new DateTime(2024, 2, 2, 16, 0, 0), TickType.Trade);
+                yield return new TestCaseData(AAPL, Resolution.Daily, new DateTime(2023, 1, 8, 9, 30, 0), new DateTime(2024, 2, 2, 16, 0, 0), TickType.Trade);
             }
         }
 
@@ -94,20 +95,18 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
         {
             get
             {
-                var symbol = Symbol.Create("AAPL", SecurityType.Equity, Market.USA);
-
                 var startUtc = new DateTime(2024, 1, 1);
                 var endUtc = new DateTime(2024, 2, 1);
 
-                yield return new TestCaseData(symbol, Resolution.Minute, startUtc, endUtc, TickType.Quote, false)
+                yield return new TestCaseData(AAPL, Resolution.Minute, startUtc, endUtc, TickType.Quote, false)
                     .SetDescription($"Not supported {nameof(TickType.Quote)} -> empty result");
-                yield return new TestCaseData(symbol, Resolution.Minute, startUtc, endUtc, TickType.OpenInterest, false)
+                yield return new TestCaseData(AAPL, Resolution.Minute, startUtc, endUtc, TickType.OpenInterest, false)
                     .SetDescription($"Not supported {nameof(TickType.OpenInterest)} -> empty result");
-                yield return new TestCaseData(symbol, Resolution.Tick, startUtc, endUtc, TickType.Trade, true)
+                yield return new TestCaseData(AAPL, Resolution.Tick, startUtc, endUtc, TickType.Trade, true)
                     .SetDescription($"Not supported {nameof(Resolution.Tick)} -> throw Exception");
-                yield return new TestCaseData(symbol, Resolution.Second, startUtc, endUtc, TickType.Trade, true)
+                yield return new TestCaseData(AAPL, Resolution.Second, startUtc, endUtc, TickType.Trade, true)
                     .SetDescription($"Not supported {nameof(Resolution.Second)} -> throw Exception");
-                yield return new TestCaseData(symbol, Resolution.Minute, endUtc, startUtc, TickType.Trade, false)
+                yield return new TestCaseData(AAPL, Resolution.Minute, endUtc, startUtc, TickType.Trade, false)
                     .SetDescription("startDateTime > endDateTime -> empty result");
                 yield return new TestCaseData(Symbol.Create("USDJPY", SecurityType.Forex, Market.Oanda), Resolution.Minute, startUtc, endUtc, TickType.Trade, false)
                     .SetDescription($"Not supported {nameof(SecurityType.Forex)} -> empty result");

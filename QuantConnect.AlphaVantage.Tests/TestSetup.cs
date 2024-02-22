@@ -18,6 +18,7 @@ using System;
 using System.IO;
 using NUnit.Framework;
 using System.Collections;
+using QuantConnect.Tests;
 using QuantConnect.Logging;
 using QuantConnect.Configuration;
 
@@ -61,6 +62,8 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
 
             // resets the version among other things
             Globals.Reset();
+            // Initialize providers dependency
+            TestGlobals.Initialize();
         }
     }
 }
