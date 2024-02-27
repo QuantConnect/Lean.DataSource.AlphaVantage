@@ -4,10 +4,10 @@
 		<Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
 		<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
 		<TargetFramework>net6.0</TargetFramework>
-		<Product>QuantConnect.AlphaVantage</Product>
-		<AssemblyName>QuantConnect.AlphaVantage</AssemblyName>
-		<RootNamespace>QuantConnect.AlphaVantage</RootNamespace>
-		<AssemblyTitle>QuantConnect.AlphaVantage</AssemblyTitle>
+		<Product>QuantConnect.Lean.DataSource.AlphaVantage</Product>
+		<AssemblyName>QuantConnect.Lean.DataSource.AlphaVantage</AssemblyName>
+		<RootNamespace>QuantConnect.Lean.DataSource.AlphaVantage</RootNamespace>
+		<AssemblyTitle>QuantConnect.Lean.DataSource.AlphaVantage</AssemblyTitle>
 		<OutputType>Library</OutputType>
 		<OutputPath>bin\$(Configuration)</OutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>

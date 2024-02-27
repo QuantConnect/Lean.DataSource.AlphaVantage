@@ -21,7 +21,7 @@ using QuantConnect.Securities;
 using QuantConnect.Data.Market;
 using System.Collections.Generic;
 
-namespace QuantConnect.AlphaVantage.Tests
+namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
 {
     [TestFixture]
     public class AlphaVantageDataDownloaderTests
@@ -57,13 +57,12 @@ namespace QuantConnect.AlphaVantage.Tests
         {
             get
             {
-                var symbol = Symbol.Create("AAPL", SecurityType.Equity, Market.USA);
-
-                yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2024, 1, 1, 5, 30, 0), new DateTime(2024, 2, 1, 20, 0, 0), TickType.Trade);
-                yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2024, 1, 8, 9, 30, 0), new DateTime(2024, 1, 12, 16, 0, 0), TickType.Trade);
-                yield return new TestCaseData(symbol, Resolution.Minute, new DateTime(2015, 2, 2, 9, 30, 0), new DateTime(2015, 3, 1, 16, 0, 0), TickType.Trade);
-                yield return new TestCaseData(symbol, Resolution.Hour, new DateTime(2023, 11, 8, 9, 30, 0), new DateTime(2024, 2, 2, 16, 0, 0), TickType.Trade);
-                yield return new TestCaseData(symbol, Resolution.Daily, new DateTime(2023, 1, 8, 9, 30, 0), new DateTime(2024, 2, 2, 16, 0, 0), TickType.Trade);
+                var AAPL = new Symbol(SecurityIdentifier.GenerateEquity("AAPL", Market.USA, false), "AAPL");
+                yield return new TestCaseData(AAPL, Resolution.Minute, new DateTime(2024, 1, 1, 5, 30, 0), new DateTime(2024, 2, 1, 20, 0, 0), TickType.Trade);
+                yield return new TestCaseData(AAPL, Resolution.Minute, new DateTime(2024, 1, 8, 9, 30, 0), new DateTime(2024, 1, 12, 16, 0, 0), TickType.Trade);
+                yield return new TestCaseData(AAPL, Resolution.Minute, new DateTime(2015, 2, 2, 9, 30, 0), new DateTime(2015, 3, 1, 16, 0, 0), TickType.Trade);
+                yield return new TestCaseData(AAPL, Resolution.Hour, new DateTime(2023, 11, 8, 9, 30, 0), new DateTime(2024, 2, 2, 16, 0, 0), TickType.Trade);
+                yield return new TestCaseData(AAPL, Resolution.Daily, new DateTime(2023, 1, 8, 9, 30, 0), new DateTime(2024, 2, 2, 16, 0, 0), TickType.Trade);
             }
         }
 
@@ -94,42 +93,33 @@ namespace QuantConnect.AlphaVantage.Tests
         {
             get
             {
-                var symbol = Symbol.Create("AAPL", SecurityType.Equity, Market.USA);
-
                 var startUtc = new DateTime(2024, 1, 1);
                 var endUtc = new DateTime(2024, 2, 1);
+                var AAPL = new Symbol(SecurityIdentifier.GenerateEquity("AAPL", Market.USA, false), "AAPL");
 
-                yield return new TestCaseData(symbol, Resolution.Minute, startUtc, endUtc, TickType.Quote, false)
+                yield return new TestCaseData(AAPL, Resolution.Minute, startUtc, endUtc, TickType.Quote)
                     .SetDescription($"Not supported {nameof(TickType.Quote)} -> empty result");
-                yield return new TestCaseData(symbol, Resolution.Minute, startUtc, endUtc, TickType.OpenInterest, false)
+                yield return new TestCaseData(AAPL, Resolution.Minute, startUtc, endUtc, TickType.OpenInterest)
                     .SetDescription($"Not supported {nameof(TickType.OpenInterest)} -> empty result");
-                yield return new TestCaseData(symbol, Resolution.Tick, startUtc, endUtc, TickType.Trade, true)
+                yield return new TestCaseData(AAPL, Resolution.Tick, startUtc, endUtc, TickType.Trade)
                     .SetDescription($"Not supported {nameof(Resolution.Tick)} -> throw Exception");
-                yield return new TestCaseData(symbol, Resolution.Second, startUtc, endUtc, TickType.Trade, true)
+                yield return new TestCaseData(AAPL, Resolution.Second, startUtc, endUtc, TickType.Trade)
                     .SetDescription($"Not supported {nameof(Resolution.Second)} -> throw Exception");
-                yield return new TestCaseData(symbol, Resolution.Minute, endUtc, startUtc, TickType.Trade, false)
+                yield return new TestCaseData(AAPL, Resolution.Minute, endUtc, startUtc, TickType.Trade)
                     .SetDescription("startDateTime > endDateTime -> empty result");
-                yield return new TestCaseData(Symbol.Create("USDJPY", SecurityType.Forex, Market.Oanda), Resolution.Minute, startUtc, endUtc, TickType.Trade, false)
+                yield return new TestCaseData(Symbol.Create("USDJPY", SecurityType.Forex, Market.Oanda), Resolution.Minute, startUtc, endUtc, TickType.Trade)
                     .SetDescription($"Not supported {nameof(SecurityType.Forex)} -> empty result");
-                yield return new TestCaseData(Symbol.Create("BTCUSD", SecurityType.Crypto, Market.Coinbase), Resolution.Minute, startUtc, endUtc, TickType.Trade, false)
+                yield return new TestCaseData(Symbol.Create("BTCUSD", SecurityType.Crypto, Market.Coinbase), Resolution.Minute, startUtc, endUtc, TickType.Trade)
                     .SetDescription($"Not supported {nameof(SecurityType.Crypto)} -> empty result");
             }
         }
 
         [TestCaseSource(nameof(DownloaderInvalidCaseData))]
-        public void DownloadDataWithDifferentInvalidParameters(Symbol symbol, Resolution resolution, DateTime start, DateTime end, TickType tickType, bool isThrowException)
+        public void DownloadDataWithDifferentInvalidParameters(Symbol symbol, Resolution resolution, DateTime start, DateTime end, TickType tickType)
         {
             var downloadParameters = new DataDownloaderGetParameters(symbol, resolution, start, end, tickType);
 
-            if (isThrowException)
-            {
-                Assert.Throws<ArgumentOutOfRangeException>(() => _downloader.Get(downloadParameters).ToList());
-                return;
-            }
-
-            var baseData = _downloader.Get(downloadParameters).ToList();
-
-            Assert.IsEmpty(baseData);
+            Assert.IsNull(_downloader.Get(downloadParameters)?.ToList());
         }
 
         private DateTime ConvertUtcTimeToSymbolExchange(Symbol symbol, DateTime dateTimeUtc)

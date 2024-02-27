@@ -31,9 +31,9 @@ using QuantConnect.Configuration;
 using System.Security.Cryptography;
 using System.Collections.Concurrent;
 using System.Net.NetworkInformation;
-using QuantConnect.AlphaVantage.Enums;
+using QuantConnect.Lean.DataSource.AlphaVantage.Enums;
 
-namespace QuantConnect.AlphaVantage
+namespace QuantConnect.Lean.DataSource.AlphaVantage
 {
     /// <summary>
     /// Alpha Vantage data downloader
@@ -48,12 +48,22 @@ namespace QuantConnect.AlphaVantage
         /// <summary>
         /// Indicates whether the warning for invalid history <see cref="TickType"/> has been fired.
         /// </summary>
-        private bool _invalidHistoryDataTypeWarningFired;
+        private bool _invalidHistoryDataTypeErrorFired;
 
         /// <summary>
         /// Indicates whether the warning for invalid <see cref="SecurityType"/> has been fired.
         /// </summary>
         private bool _invalidSecurityTypeWarningFired;
+
+        /// <summary>
+        /// Indicates whether a warning for an invalid <see cref="Resolution"/> has been fired, where the resolution is neither daily nor minute-based.
+        /// </summary>
+        private bool _invalidResolutionWarningFired;
+
+        /// <summary>
+        /// Indicates whether a warning for an invalid start time has been fired, where the start time is greater than or equal to the end time in UTC.
+        /// </summary>
+        private bool _invalidStartTimeErrorFired;
 
         /// <summary>
         /// Represents a mapping of symbols to their corresponding time zones for exchange information.
@@ -114,7 +124,7 @@ namespace QuantConnect.AlphaVantage
         /// </summary>
         /// <param name="dataDownloaderGetParameters">model class for passing in parameters for historical data</param>
         /// <returns>Enumerable of base data for this symbol</returns>
-        public IEnumerable<BaseData> Get(DataDownloaderGetParameters dataDownloaderGetParameters)
+        public IEnumerable<BaseData>? Get(DataDownloaderGetParameters dataDownloaderGetParameters)
         {
             var symbol = dataDownloaderGetParameters.Symbol;
             var resolution = dataDownloaderGetParameters.Resolution;
@@ -124,19 +134,23 @@ namespace QuantConnect.AlphaVantage
 
             if (endUtc < startUtc)
             {
-                Log.Error($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}:InvalidDateRange. The history request start date must precede the end date, no history returned");
-                return Enumerable.Empty<BaseData>();
+                if (!_invalidStartTimeErrorFired)
+                {
+                    Log.Error($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}:InvalidDateRange. The history request start date must precede the end date, no history returned");
+                    _invalidStartTimeErrorFired = true;
+                }
+                return null;
             }
 
             if (tickType != TickType.Trade)
             {
-                if (!_invalidHistoryDataTypeWarningFired)
+                if (!_invalidHistoryDataTypeErrorFired)
                 {
                     Log.Error($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}: Not supported data type - {tickType}. " +
                         $"Currently available support only for historical of type - TradeBar");
-                    _invalidHistoryDataTypeWarningFired = true;
+                    _invalidHistoryDataTypeErrorFired = true;
                 }
-                return Enumerable.Empty<BaseData>();
+                return null;
             }
 
             if (symbol.SecurityType != SecurityType.Equity)
@@ -146,7 +160,7 @@ namespace QuantConnect.AlphaVantage
                     Log.Trace($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}: Unsupported SecurityType '{symbol.SecurityType}' for symbol '{symbol}'");
                     _invalidSecurityTypeWarningFired = true;
                 }
-                return Enumerable.Empty<BaseData>();
+                return null;
             }
 
             var request = new RestRequest("query", DataFormat.Json);
@@ -164,7 +178,12 @@ namespace QuantConnect.AlphaVantage
                     data = GetDailyData(request, startUtc, endUtc, symbol);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(resolution), $"{resolution} resolution not supported by API.");
+                    if (!_invalidResolutionWarningFired)
+                    {
+                        Log.Trace($"{nameof(AlphaVantageDataDownloader)}.{resolution} resolution not supported by API.");
+                        _invalidResolutionWarningFired = true;
+                    }
+                    return null;
             }
 
             var period = resolution.ToTimeSpan();
@@ -383,9 +402,9 @@ namespace QuantConnect.AlphaVantage
             try
             {
                 const int productId = 334;
-                var userId = Config.GetInt("job-user-id");
-                var token = Config.Get("api-access-token");
-                var organizationId = Config.Get("job-organization-id", null);
+                var userId = Globals.UserId;
+                var token = Globals.UserToken;
+                var organizationId = Globals.OrganizationID;
                 // Verify we can authenticate with this user and token
                 var api = new ApiConnection(userId, token);
                 if (!api.Connected)

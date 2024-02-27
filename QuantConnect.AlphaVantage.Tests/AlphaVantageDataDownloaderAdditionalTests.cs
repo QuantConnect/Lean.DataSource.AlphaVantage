@@ -17,7 +17,7 @@ using System;
 using NUnit.Framework;
 using QuantConnect.Configuration;
 
-namespace QuantConnect.AlphaVantage.Tests
+namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
 {
     [TestFixture]
     public class AlphaVantageDataDownloaderAdditionalTests
