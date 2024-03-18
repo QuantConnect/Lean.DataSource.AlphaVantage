@@ -164,7 +164,8 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage
             }
 
             var request = new RestRequest("query", DataFormat.Json);
-            request.AddParameter("symbol", symbol.Value);
+            // Always obtain the most relevant ticker symbol based on the current time.
+            request.AddParameter("symbol", SecurityIdentifier.Ticker(dataDownloaderGetParameters.Symbol, DateTime.UtcNow));
             request.AddParameter("datatype", "csv");
 
             IEnumerable<TimeSeries> data;
@@ -206,7 +207,8 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage
             request.AddParameter("function", "TIME_SERIES_DAILY");
 
             // The default output only includes 100 trading days of data. If we want need more, specify full output
-            if (GetBusinessDays(startUtc, endUtc, symbol) > 100)
+            // Compare with Today, because request doesn't contain specific DateTime range
+            if (GetBusinessDays(startUtc, DateTime.UtcNow, symbol) > 100)
             {
                 request.AddParameter("outputsize", "full");
             }
