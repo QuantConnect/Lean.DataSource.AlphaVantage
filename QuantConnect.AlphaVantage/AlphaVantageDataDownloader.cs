@@ -48,22 +48,22 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage
         /// <summary>
         /// Indicates whether the warning for invalid history <see cref="TickType"/> has been fired.
         /// </summary>
-        private bool _invalidHistoryDataTypeErrorFired;
+        private volatile bool _invalidHistoryDataTypeErrorFired;
 
         /// <summary>
         /// Indicates whether the warning for invalid <see cref="SecurityType"/> has been fired.
         /// </summary>
-        private bool _invalidSecurityTypeWarningFired;
+        private volatile bool _invalidSecurityTypeWarningFired;
 
         /// <summary>
         /// Indicates whether a warning for an invalid <see cref="Resolution"/> has been fired, where the resolution is neither daily nor minute-based.
         /// </summary>
-        private bool _invalidResolutionWarningFired;
+        private volatile bool _invalidResolutionWarningFired;
 
         /// <summary>
         /// Indicates whether a warning for an invalid start time has been fired, where the start time is greater than or equal to the end time in UTC.
         /// </summary>
-        private bool _invalidStartTimeErrorFired;
+        private volatile bool _invalidStartTimeErrorFired;
 
         /// <summary>
         /// Represents a mapping of symbols to their corresponding time zones for exchange information.
@@ -136,8 +136,8 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage
             {
                 if (!_invalidStartTimeErrorFired)
                 {
-                    Log.Error($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}:InvalidDateRange. The history request start date must precede the end date, no history returned");
                     _invalidStartTimeErrorFired = true;
+                    Log.Error($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}:InvalidDateRange. The history request start date must precede the end date, no history returned");
                 }
                 return null;
             }
@@ -146,9 +146,9 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage
             {
                 if (!_invalidHistoryDataTypeErrorFired)
                 {
+                    _invalidHistoryDataTypeErrorFired = true;
                     Log.Error($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}: Not supported data type - {tickType}. " +
                         $"Currently available support only for historical of type - TradeBar");
-                    _invalidHistoryDataTypeErrorFired = true;
                 }
                 return null;
             }
@@ -157,17 +157,18 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage
             {
                 if (!_invalidSecurityTypeWarningFired)
                 {
-                    Log.Trace($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}: Unsupported SecurityType '{symbol.SecurityType}' for symbol '{symbol}'");
                     _invalidSecurityTypeWarningFired = true;
+                    Log.Trace($"{nameof(AlphaVantageDataDownloader)}.{nameof(Get)}: Unsupported SecurityType '{symbol.SecurityType}' for symbol '{symbol}'");
                 }
                 return null;
             }
 
             var request = new RestRequest("query", DataFormat.Json);
-            request.AddParameter("symbol", symbol.Value);
+            // Always obtain the most relevant ticker symbol based on the current time.
+            request.AddParameter("symbol", SecurityIdentifier.Ticker(dataDownloaderGetParameters.Symbol, DateTime.UtcNow));
             request.AddParameter("datatype", "csv");
 
-            IEnumerable<TimeSeries> data = null;
+            IEnumerable<TimeSeries> data;
             switch (resolution)
             {
                 case Resolution.Minute:
@@ -180,8 +181,8 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage
                 default:
                     if (!_invalidResolutionWarningFired)
                     {
-                        Log.Trace($"{nameof(AlphaVantageDataDownloader)}.{resolution} resolution not supported by API.");
                         _invalidResolutionWarningFired = true;
+                        Log.Trace($"{nameof(AlphaVantageDataDownloader)}.{resolution} resolution not supported by API.");
                     }
                     return null;
             }
@@ -206,7 +207,8 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage
             request.AddParameter("function", "TIME_SERIES_DAILY");
 
             // The default output only includes 100 trading days of data. If we want need more, specify full output
-            if (GetBusinessDays(startUtc, endUtc, symbol) > 100)
+            // Compare with Today, because request doesn't contain specific DateTime range
+            if (GetBusinessDays(startUtc, DateTime.UtcNow, symbol) > 100)
             {
                 request.AddParameter("outputsize", "full");
             }

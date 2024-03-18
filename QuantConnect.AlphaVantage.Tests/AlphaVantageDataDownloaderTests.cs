@@ -17,6 +17,7 @@ using System;
 using System.Linq;
 using NUnit.Framework;
 using QuantConnect.Util;
+using QuantConnect.Tests;
 using QuantConnect.Securities;
 using QuantConnect.Data.Market;
 using System.Collections.Generic;
@@ -57,6 +58,7 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
         {
             get
             {
+                TestGlobals.Initialize();
                 var AAPL = new Symbol(SecurityIdentifier.GenerateEquity("AAPL", Market.USA, false), "AAPL");
                 yield return new TestCaseData(AAPL, Resolution.Minute, new DateTime(2024, 1, 1, 5, 30, 0), new DateTime(2024, 2, 1, 20, 0, 0), TickType.Trade);
                 yield return new TestCaseData(AAPL, Resolution.Minute, new DateTime(2024, 1, 8, 9, 30, 0), new DateTime(2024, 1, 12, 16, 0, 0), TickType.Trade);
@@ -120,6 +122,33 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage.Tests
             var downloadParameters = new DataDownloaderGetParameters(symbol, resolution, start, end, tickType);
 
             Assert.IsNull(_downloader.Get(downloadParameters)?.ToList());
+        }
+
+        [TestCase("GOOG", "2014/04/01", "2014/06/02", "GOOG", Description = "GOOCV before 2014/04/02, GOOG")]
+        [TestCase("GOOGL", "2015/10/3", "2015/12/29", "GOOGL", Description = "October 2, 2015. [GOOG -> GOOGL]")]
+        [TestCase("META", "2021/11/3", "2022/1/2", "META", Description = "October 28, 2021. [FB -> META]")]
+        public void DownloadHistoricalDataBeforeSymbolWasRestructured(string ticker, DateTime startUtc, DateTime endUtc, string expectedTicker)
+        {
+            var symbol = Symbol.Create(ticker, SecurityType.Equity, Market.USA);
+            //var symbol = new Symbol(SecurityIdentifier.GenerateEquity(ticker, Market.USA, false), ticker);
+            var downloadParameters = new DataDownloaderGetParameters(symbol, Resolution.Daily, startUtc, endUtc, TickType.Trade);
+
+            var baseData = _downloader.Get(downloadParameters).ToList();
+
+            Assert.IsNotEmpty(baseData);
+            Assert.IsTrue(baseData.First().Time >= ConvertUtcTimeToSymbolExchange(symbol, startUtc));
+            Assert.IsTrue(baseData.Last().Time <= ConvertUtcTimeToSymbolExchange(symbol, endUtc));
+
+            foreach (var data in baseData)
+            {
+                Assert.IsTrue(data.DataType == MarketDataType.TradeBar);
+                var tradeBar = data as TradeBar;
+                Assert.Greater(tradeBar.Open, 0m);
+                Assert.Greater(tradeBar.High, 0m);
+                Assert.Greater(tradeBar.Low, 0m);
+                Assert.Greater(tradeBar.Close, 0m);
+                Assert.IsTrue(tradeBar.Period.ToHigherResolutionEquivalent(true) == Resolution.Daily);
+            }
         }
 
         private DateTime ConvertUtcTimeToSymbolExchange(Symbol symbol, DateTime dateTimeUtc)
