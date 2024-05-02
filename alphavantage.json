@@ -10,5 +10,23 @@
         }
     ],
     "data-supported": [ "Equity" ], 
-    "more-information": "https://www.alphavantage.co/"
+    "more-information": "https://www.alphavantage.co/",
+    "module-specification": {
+        "download": {
+            "data-types": [
+                "Trade"
+            ],
+            "resolutions": [
+                "Minute",
+                "Hour",
+                "Daily"
+            ],
+            "security-types": [
+                "Equity"
+            ],
+            "markets": [
+                "USA"
+            ]
+        }
+    }
 }
