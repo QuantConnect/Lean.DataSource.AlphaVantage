@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
 		<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net9.0</TargetFramework>
 		<Product>QuantConnect.Lean.DataSource.AlphaVantage</Product>
 		<AssemblyName>QuantConnect.Lean.DataSource.AlphaVantage</AssemblyName>
 		<RootNamespace>QuantConnect.Lean.DataSource.AlphaVantage</RootNamespace>
