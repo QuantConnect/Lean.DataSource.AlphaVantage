@@ -272,9 +272,28 @@ namespace QuantConnect.Lean.DataSource.AlphaVantage
             Log.Trace("Downloading /{0}?{1}", request.Resource, string.Join("&", request.Parameters.Where(p => p.Name != "apikey")));
             var response = _avClient.Get(request);
 
-            if (response.ContentType != "application/x-download")
+            switch (response.ContentType)
             {
-                throw new FormatException($"Unexpected content received from API.\n{response.Content}");
+                case "application/json":
+                    var jObject = JObject.Parse(response.Content);
+
+                    if (jObject.TryGetValue("Information", StringComparison.InvariantCultureIgnoreCase, out var infoToken))
+                    {
+                        throw new Exception($"{nameof(AlphaVantageDataDownloader)}.{nameof(GetTimeSeries)}.Information: {infoToken}");
+                    }
+
+                    if (jObject.TryGetValue("Error Message", StringComparison.InvariantCultureIgnoreCase, out var errorToken))
+                    {
+                        var errorMessage = errorToken?.ToString();
+                        if (!string.IsNullOrEmpty(errorMessage) &&
+                            errorMessage.Contains("Please retry", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            Log.Trace($"Received an error from Alpha Vantage: \"{errorMessage}\". Retrying the request...");
+                            return GetTimeSeries(request);
+                        }
+                        throw new Exception($"{nameof(AlphaVantageDataDownloader)}.{nameof(GetTimeSeries)}.Error Message: {errorMessage}");
+                    }
+                    throw new Exception($"{nameof(AlphaVantageDataDownloader)}.{nameof(GetTimeSeries)}.Unexpected JSON Response: {response.Content}");
             }
 
             using (var reader = new StringReader(response.Content))
