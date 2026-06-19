@@ -49,7 +49,7 @@ git clone https://github.com/your-username/alpha-vantage-connector-dotnet.git
 For detailed information on Alpha Vantage's pricing plans, please refer to the [Alpha Vantage Pricing](https://www.alphavantage.co/premium/) page.
 
 ### Documentation
-Refer to the [documentation](https://www.quantconnect.com/docs/v2/lean-cli/datasets/alphavantage) for detailed information on the library's functions, parameters, and usage examples.
+Refer to the [documentation](https://www.quantconnect.com/docs/v2/lean-cli/datasets/alpha-vantage) for detailed information on the library's functions, parameters, and usage examples.
 
 ### License
 This project is licensed under the MIT License - see the [LICENSE](#) file for details.
